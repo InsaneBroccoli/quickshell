@@ -9,7 +9,9 @@ ShellRoot {
 
     // System info properties
     property string kernelVersion: "Linux"
-    property int capacity: 0
+    property int capacity: -1
+    property string batteryStatus: "nan"
+    property int batBreakpoint: 80
 
     component Separator: Rectangle {
       Layout.preferredWidth: 2
@@ -52,13 +54,23 @@ ShellRoot {
         }
     }
 
+    FileView {
+      id: batStatus
+      path: "/sys/class/power_supply/BAT0/status"
+
+      onLoaded: {
+        batteryStatus = batStatus.text().trim()
+      }
+    }
+
     // Slow timer for system stats
     Timer {
-        interval: 4000
+        interval: 2000
         running: true
         repeat: true
         onTriggered: {
             batFile.reload()
+            batStatus.reload()
         }
     }
 
@@ -80,8 +92,8 @@ ShellRoot {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.rightMargin: 4
-                anchors.leftMargin: 4
+                anchors.rightMargin: 8
+                anchors.leftMargin: 8
                 spacing: 8
 
                 Rectangle {
@@ -106,19 +118,18 @@ ShellRoot {
                     Repeater {
                         model: 10
 
-                        Rectangle {
+                        Item {
                             Layout.preferredWidth: 16
                             Layout.fillHeight: true
-                            color: "transparent"
 
                             property var workspace: Hyprland.workspaces.values.find(ws => ws.id === index + 1) ?? null
                             property bool isActive: Hyprland.focusedWorkspace?.id === (index + 1)
-                            property bool hasWindows: workspace !== null
+                            property bool isOccupied: workspace !== null
 
                             Text {
                                 text: (index + 1) === 10 ? "0" : index + 1
                                 color: parent.isActive ? Theme.bar.wsActive
-                                     : parent.hasWindows ? Theme.bar.wsOccupied
+                                     : parent.isOccupied ? Theme.bar.wsOccupied
                                      : Theme.bar.wsEmpty
                                 font.pixelSize: Theme.fontSize
                                 font.family: Theme.fontFamily
@@ -172,6 +183,31 @@ ShellRoot {
                 BarText {
                     text: Qt.formatDateTime(clock.date, "ddd, MMM dd - HH:mm")
                     color: Theme.bar.clock
+                }
+
+                Item {
+                  Layout.preferredWidth: 10
+                  Layout.preferredHeight: 18
+                  Layout.alignment: Qt.AlignVCenter
+
+                  Rectangle {
+                    height: capacity <= batBreakpoint ? (12.5 - 3)/batBreakpoint * capacity + 3 : (17 - 12.5)/(100 - batBreakpoint) * capacity - 5.5
+                    width: 8
+                    color: Theme.bar.batFilling
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    radius: 3
+                    topRightRadius: 1
+                    topLeftRadius: 1
+                  }
+
+                  Rectangle {
+                    anchors.fill: parent
+                    color: "transparent" 
+                    border.width: 1
+                    border.color: Theme.bar.batOutline
+                    radius: 3
+                  }
 
                 }
             }

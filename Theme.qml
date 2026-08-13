@@ -38,5 +38,7 @@ Singleton {
         readonly property color kernel:      red
         readonly property color battery:     green
         readonly property color clock:       orange
+        readonly property color batOutline:  dim2
+        readonly property color batFilling:  green
     }
 }
