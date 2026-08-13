@@ -11,6 +11,23 @@ ShellRoot {
     property string kernelVersion: "Linux"
     property int capacity: 0
 
+    component Separator: Rectangle {
+      Layout.preferredWidth: 2
+      Layout.preferredHeight: 18
+      Layout.alignment: Qt.AlignVCenter
+      color: Theme.bar.separator
+      radius: 8
+    }
+
+    component BarText: Text {
+      font.pixelSize: Theme.fontSize
+      font.family: Theme.fontFamily
+      font.bold: true
+      elide: Text.ElideRight
+      Layout.alignment: Qt.AlignVCenter
+      maximumLineCount: 1
+    }
+
     SystemClock {
       id: clock
       precision: SystemClock.Minutes
@@ -61,45 +78,36 @@ ShellRoot {
             implicitHeight: 30
             color: Theme.bar.bg
 
-            margins {
-                top: 0
-                bottom: 0
-                left: 0
-                right: 0
-            }
-
-            Rectangle {
+            RowLayout {
                 anchors.fill: parent
-                color: Theme.bar.bg
+                anchors.rightMargin: 4
+                anchors.leftMargin: 4
+                spacing: 8
+
+                Rectangle {
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
+                    color: "transparent"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: ""
+                        color: Theme.bar.logo
+                        font.pixelSize: 24
+                        font.family: Theme.fontFamily
+                        font.bold: true
+                    }
+                }
 
                 RowLayout {
-                    anchors.fill: parent
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.fillHeight: true
                     spacing: 0
-
-                    Item { Layout.preferredWidth: 8 }
-
-                    Rectangle {
-                        Layout.preferredWidth: 24
-                        Layout.preferredHeight: 24
-                        color: "transparent"
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: ""
-                            color: Theme.bar.logo
-                            font.pixelSize: 24
-                            font.family: Theme.fontFamily
-                            font.bold: true
-                        }
-                    }
-
-                    Item { Layout.preferredWidth: 8 }
-
                     Repeater {
                         model: 10
 
                         Rectangle {
-                            Layout.preferredWidth: 20
+                            Layout.preferredWidth: 16
                             Layout.fillHeight: true
                             color: "transparent"
 
@@ -119,7 +127,7 @@ ShellRoot {
                             }
 
                             Rectangle {
-                                width: 20
+                                width: parent.width
                                 height: 3
                                 radius: 8
                                 color: parent.isActive ? Theme.bar.wsUnderline : "transparent"
@@ -133,75 +141,38 @@ ShellRoot {
                             }
                         }
                     }
+                }
 
-                    Rectangle {
-                        Layout.preferredWidth: 2
-                        Layout.preferredHeight: 16
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.leftMargin: 8
-                        Layout.rightMargin: 2
-                        color: Theme.bar.separator
-                    }
+                Separator {
+                    Layout.rightMargin: 2
+                }
 
-                    Text {
-                        text: Hyprland.activeToplevel?.title ?? ""
-                        color: Theme.bar.windowTitle
-                        font.pixelSize: Theme.fontSize
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 8
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                    }
+                BarText {
+                    text: Hyprland.activeToplevel?.title ?? ""
+                    color: Theme.bar.windowTitle
+                    Layout.fillWidth: true
+                }
 
-                    Text {
-                        text: kernelVersion
-                        color: Theme.bar.kernel
-                        font.pixelSize: Theme.fontSize
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        Layout.rightMargin: 8
-                    }
+                BarText {
+                    text: kernelVersion
+                    color: Theme.bar.kernel
+                }
 
-                    Rectangle {
-                        Layout.preferredWidth: 2
-                        Layout.preferredHeight: 16
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.leftMargin: 0
-                        Layout.rightMargin: 8
-                        color: Theme.bar.separator
-                    }
+                Separator {
+                }
 
-                    Text {
-                        text: capacity + "%"
-                        color: Theme.bar.battery
-                        font.pixelSize: Theme.fontSize
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        Layout.rightMargin: 8
-                    }
+                BarText {
+                    text: capacity + "%"
+                    color: Theme.bar.battery
+                }
 
-                    Rectangle {
-                        Layout.preferredWidth: 2
-                        Layout.preferredHeight: 16
-                        Layout.alignment: Qt.AlignVCenter
-                        Layout.leftMargin: 0
-                        Layout.rightMargin: 8
-                        color: Theme.bar.separator
-                    }
+                Separator {
+                }
 
-                    Text {
-                        text: Qt.formatDateTime(clock.date, "ddd, MMM dd - HH:mm")
-                        color: Theme.bar.clock
-                        font.pixelSize: Theme.fontSize
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        Layout.rightMargin: 8
+                BarText {
+                    text: Qt.formatDateTime(clock.date, "ddd, MMM dd - HH:mm")
+                    color: Theme.bar.clock
 
-                    }
-
-                    Item { Layout.preferredWidth: 8 }
                 }
             }
         }
