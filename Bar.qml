@@ -3,6 +3,7 @@ import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
+
 PanelWindow {
     id: bar
 
@@ -12,7 +13,24 @@ PanelWindow {
     property string kernelVersion: "Linux"
     property int capacity: -1
     property string batteryst: "nan"
+
+    readonly property int batFull: 100
     readonly property int batBreakpoint: 80
+    readonly property real heightBreakpoint: 12.5
+    readonly property int heightLow: 3
+    readonly property int heightFull: 17
+
+    readonly property int batFullThreshold: 40
+    readonly property int batNeedsChargeThreshold: 30
+
+    anchors {
+        top: true
+        left: true
+        right: true
+    }
+
+    implicitHeight: 30
+    color: Theme.bar.bg
 
     component Separator: Rectangle {
       Layout.preferredWidth: 2
@@ -30,14 +48,30 @@ PanelWindow {
       Layout.alignment: Qt.AlignVCenter
       maximumLineCount: 1
     }
-    anchors {
-        top: true
-        left: true
-        right: true
+
+    function fillColor(cap, status) {
+      if (cap < batFullThreshold) {
+        if (cap < batNeedsChargeThreshold) 
+         return Theme.bar.batCritical;
+        return Theme.bar.batNeedsCharge
+      }
+      return Theme.bar.batFull;
     }
 
-    implicitHeight: 30
-    color: Theme.bar.bg
+    function getBatteryHeight(cap) {
+       var m;
+       var b;
+
+       if (cap <= batBreakpoint) {
+         m = (heightBreakpoint - heightLow) / batBreakpoint;
+         b = heightBreakpoint - m * batBreakpoint;
+         return m * cap + b;
+       }
+
+       m = (heightFull - heightBreakpoint) / (batFull - batBreakpoint);
+       b = heightFull - m * batFull;
+       return m * cap + b;
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -140,9 +174,9 @@ PanelWindow {
           Layout.alignment: Qt.AlignVCenter
 
           Rectangle {
-            height: capacity <= batBreakpoint ? (12.5 - 3)/batBreakpoint * capacity + 3 : (17 - 12.5)/(100 - batBreakpoint) * capacity - 5.5
+            height: getBatteryHeight(capacity)
             width: 8
-            color: Theme.bar.batFilling
+            color: fillColor(capacity, batteryst)
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             radius: 3
