@@ -10,11 +10,6 @@ ShellRoot {
     property int capacity: -1
     property string batteryst: "nan"
 
-
-    SystemClock {
-      id: clock
-      precision: SystemClock.Minutes
-    }
     // Kernel version
     FileView {
         id: kernelFile

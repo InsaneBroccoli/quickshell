@@ -25,22 +25,22 @@ Singleton {
 
     // ── Roles: named for what the color DOES ──
     readonly property QtObject bar: QtObject {
-        readonly property color bg:             base
-        readonly property color separator:      dim4
-        readonly property color logo:           blue
+        readonly property color bg:          base
+        readonly property color separator:   dim4
+        readonly property color logo:        blue
 
-        readonly property color wsActive:       green
-        readonly property color wsOccupied:     dim2
-        readonly property color wsEmpty:        dim4
-        readonly property color wsUnderline:    purple
+        readonly property color wsActive:    green
+        readonly property color wsOccupied:  dim2
+        readonly property color wsEmpty:     dim4
+        readonly property color wsUnderline: purple
 
-        readonly property color windowTitle:    purple
-        readonly property color kernel:         red
-        readonly property color battery:        green
-        readonly property color clock:          orange
-        readonly property color batOutline:     dim2
-        readonly property color batFull:        green
-        readonly property color batNeedsCharge: yellow
-        readonly property color batCritical:    red
+        readonly property color windowTitle: purple
+        readonly property color kernel:      red
+        readonly property color battery:     green
+        readonly property color clock:       orange
+        readonly property color batOutline:  dim2
+        readonly property color batNormal:   green
+        readonly property color batWarning:  yellow
+        readonly property color batCritical: red
     }
 }

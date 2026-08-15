@@ -20,8 +20,8 @@ PanelWindow {
     readonly property int heightLow: 3
     readonly property int heightFull: 17
 
-    readonly property int batFullThreshold: 40
-    readonly property int batNeedsChargeThreshold: 30
+    readonly property int batNormalThreshold: 40
+    readonly property int batWarningThreshold: 30
 
     anchors {
         top: true
@@ -49,18 +49,23 @@ PanelWindow {
       maximumLineCount: 1
     }
 
+    SystemClock {
+      id: clock
+      precision: SystemClock.Minutes
+    }
+
     function fillColor(cap, status) {
-      if (cap < batFullThreshold) {
-        if (cap < batNeedsChargeThreshold) 
+      if (cap < batNormalThreshold) {
+        if (cap < batWarningThreshold) 
          return Theme.bar.batCritical;
-        return Theme.bar.batNeedsCharge
+        return Theme.bar.batWarning
       }
-      return Theme.bar.batFull;
+      return Theme.bar.batNormal;
     }
 
     function getBatteryHeight(cap) {
-       var m;
-       var b;
+       let m;
+       let b;
 
        if (cap <= batBreakpoint) {
          m = (heightBreakpoint - heightLow) / batBreakpoint;
