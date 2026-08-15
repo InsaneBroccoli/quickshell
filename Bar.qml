@@ -3,7 +3,6 @@ import Quickshell.Hyprland
 import QtQuick
 import QtQuick.Layouts
 
-
 PanelWindow {
     id: bar
 
@@ -153,7 +152,7 @@ PanelWindow {
         }
 
         BarText {
-            text: kernelVersion
+            text: bar.kernelVersion
             color: Theme.bar.kernel
         }
 
@@ -161,7 +160,7 @@ PanelWindow {
         }
 
         BarText {
-            text: capacity + "%"
+            text: bar.capacity + "%"
             color: Theme.bar.battery
         }
 
@@ -179,9 +178,9 @@ PanelWindow {
           Layout.alignment: Qt.AlignVCenter
 
           Rectangle {
-            height: getBatteryHeight(capacity)
+            height: bar.getBatteryHeight(bar.capacity)
             width: 8
-            color: fillColor(capacity, batteryst)
+            color: bar.fillColor(bar.capacity, bar.batteryst)
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             radius: 3
