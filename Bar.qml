@@ -54,6 +54,13 @@ PanelWindow {
     }
 
     function fillColor(cap, status) {
+      switch(status) {
+        case "Not charging":
+          return Theme.bar.batNotCharging;
+        case "Charging":
+          return Theme.bar.batCharging;
+      }
+
       if (cap < batNormalThreshold) {
         if (cap < batWarningThreshold) 
          return Theme.bar.batCritical;
@@ -154,14 +161,6 @@ PanelWindow {
         BarText {
             text: bar.kernelVersion
             color: Theme.bar.kernel
-        }
-
-        Separator {
-        }
-
-        BarText {
-            text: bar.capacity + "%"
-            color: Theme.bar.battery
         }
 
         Separator {

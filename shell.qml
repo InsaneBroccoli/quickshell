@@ -8,7 +8,7 @@ ShellRoot {
     // System info properties
     property string kernelVersion: "Linux"
     property int capacity: -1
-    property string batteryst: "nan"
+    property string batteryStatus: "nan"
 
     // Kernel version
     FileView {
@@ -16,7 +16,7 @@ ShellRoot {
         path: "/proc/sys/kernel/osrelease"
 
         onLoaded: {
-          kernelVersion = kernelFile.text().trim()
+          root.kernelVersion = kernelFile.text().trim()
         }
     }
 
@@ -26,7 +26,7 @@ ShellRoot {
         path: "/sys/class/power_supply/BAT0/capacity"
 
         onLoaded: {
-          capacity = parseInt(batFile.text())
+          root.capacity = parseInt(batFile.text())
         }
     }
 
@@ -35,7 +35,7 @@ ShellRoot {
       path: "/sys/class/power_supply/BAT0/status"
 
       onLoaded: {
-        batteryStatus = batStatus.text().trim()
+        root.batteryStatus = batStatus.text().trim()
       }
     }
 
@@ -55,7 +55,7 @@ ShellRoot {
         Bar {
           capacity: root.capacity
           kernelVersion: root.kernelVersion
-          batteryst: root.batteryst
+          batteryst: root.batteryStatus
         }
     }
 }

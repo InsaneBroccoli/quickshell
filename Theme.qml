@@ -3,6 +3,7 @@ import Quickshell
 import QtQuick
 
 Singleton {
+    id: theme
     // ── Palette: Monokai Pro (default filter) ──
     readonly property color base:    "#2D2A2E"
     readonly property color baseDark:"#221F22"
@@ -25,22 +26,24 @@ Singleton {
 
     // ── Roles: named for what the color DOES ──
     readonly property QtObject bar: QtObject {
-        readonly property color bg:          base
-        readonly property color separator:   dim4
-        readonly property color logo:        blue
+        readonly property color bg:             theme.base
+        readonly property color separator:      theme.dim4
+        readonly property color logo:           theme.blue
 
-        readonly property color wsActive:    green
-        readonly property color wsOccupied:  dim2
-        readonly property color wsEmpty:     dim4
-        readonly property color wsUnderline: purple
+        readonly property color wsActive:       theme.green
+        readonly property color wsOccupied:     theme.dim2
+        readonly property color wsEmpty:        theme.dim4
+        readonly property color wsUnderline:    theme.purple
 
-        readonly property color windowTitle: purple
-        readonly property color kernel:      red
-        readonly property color battery:     green
-        readonly property color clock:       orange
-        readonly property color batOutline:  dim2
-        readonly property color batNormal:   green
-        readonly property color batWarning:  yellow
-        readonly property color batCritical: red
+        readonly property color windowTitle:    theme.purple
+        readonly property color kernel:         theme.red
+        readonly property color battery:        theme.green
+        readonly property color clock:          theme.orange
+        readonly property color batOutline:     theme.dim2
+        readonly property color batNormal:      theme.green
+        readonly property color batWarning:     theme.yellow
+        readonly property color batCritical:    theme.red
+        readonly property color batNotCharging: theme.purple
+        readonly property color batCharging:    theme.blue
     }
 }
