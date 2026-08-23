@@ -9,6 +9,7 @@ ShellRoot {
     property string kernelVersion: "Linux"
     property int capacity: -1
     property string batteryStatus: "nan"
+    property bool hasBattery: false
 
     // Kernel version
     FileView {
@@ -39,6 +40,16 @@ ShellRoot {
       }
     }
 
+    FileView {
+      id: batteryAvailable
+      path: Quickshell.env("HOME") + ("/.config/quickshell/host-facts.json")
+
+      onLoaded: {
+        root.hasBattery = JSON.parse(batteryAvailable.text()).hasBattery
+      }
+
+    }
+
     // Slow timer for system stats
     Timer {
         interval: 2000
@@ -56,6 +67,7 @@ ShellRoot {
           capacity: root.capacity
           kernelVersion: root.kernelVersion
           batteryst: root.batteryStatus
+          hasBattery: root.hasBattery
         }
     }
 }

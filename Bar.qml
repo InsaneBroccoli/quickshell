@@ -12,6 +12,7 @@ PanelWindow {
     property string kernelVersion: "Linux"
     property int capacity: -1
     property string batteryst: "nan"
+    property bool hasBattery: false
 
     readonly property int batFull: 100
     readonly property int batBreakpoint: 80
@@ -175,6 +176,7 @@ PanelWindow {
           Layout.preferredWidth: 10
           Layout.preferredHeight: 18
           Layout.alignment: Qt.AlignVCenter
+          visible: bar.hasBattery
 
           Rectangle {
             height: bar.getBatteryHeight(bar.capacity)
