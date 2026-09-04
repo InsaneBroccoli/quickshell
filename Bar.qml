@@ -1,5 +1,5 @@
 import Quickshell
-import Quickshell.Hyprland
+import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
 
@@ -106,55 +106,27 @@ PanelWindow {
             }
         }
 
-        RowLayout {
+        Workspaces {
             Layout.alignment: Qt.AlignVCenter
             Layout.fillHeight: true
-            spacing: 0
-            Repeater {
-                model: 10
 
-                Item {
-                    Layout.preferredWidth: 16
-                    Layout.fillHeight: true
-
-                    property var workspace: Hyprland.workspaces.values.find(ws => ws.id === index + 1) ?? null
-                    property bool isActive: Hyprland.focusedWorkspace?.id === (index + 1)
-                    property bool isOccupied: workspace !== null
-
-                    Text {
-                        text: (index + 1) === 10 ? "0" : index + 1
-                        color: parent.isActive ? Theme.bar.wsActive
-                             : parent.isOccupied ? Theme.bar.wsOccupied
-                             : Theme.bar.wsEmpty
-                        font.pixelSize: Theme.fontSize
-                        font.family: Theme.fontFamily
-                        font.bold: true
-                        anchors.centerIn: parent
-                    }
-
-                    Rectangle {
-                        width: parent.width
-                        height: 3
-                        radius: 8
-                        color: parent.isActive ? Theme.bar.wsUnderline : "transparent"
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        anchors.bottom: parent.bottom
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: Hyprland.dispatch("workspace " + (index + 1))
-                    }
-                }
-            }
+            // Under niri each workspace belongs to an output, so
+            // filter to this bar's screen. Hyprland's backend
+            // reports "" for empty slots, which Workspaces lets
+            // through — see the filter in Workspaces.qml.
+            output: bar.modelData ? bar.modelData.name : ""
         }
 
         Separator {
             Layout.rightMargin: 2
         }
 
+        // ToplevelManager is the wlr-foreign-toplevel protocol, which
+        // both Hyprland and niri implement — no WM branch needed.
+        // Verify on a new compositor with:
+        //   wayland-info | grep foreign_toplevel
         BarText {
-            text: Hyprland.activeToplevel?.title ?? ""
+            text: ToplevelManager.activeToplevel?.title ?? ""
             color: Theme.bar.windowTitle
             Layout.fillWidth: true
         }
