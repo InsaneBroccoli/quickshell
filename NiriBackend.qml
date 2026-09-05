@@ -26,40 +26,90 @@ QtObject {
     // day niri adds a field you only touch the mapping.
     property var rawWorkspaces: []
 
+    // Raw niri Window objects, same treatment. Only `workspace_id`
+    // is load-bearing here — it drives `occupied` — but the rest
+    // rides along for whatever the bar wants next (urgency, counts).
+    property var rawWindows: []
+
+    // niri sends WindowsChanged one callback *after* the first
+    // WorkspacesChanged, so for a frame `rawWindows` is empty while
+    // `rawWorkspaces` is not. Until it lands, fall back to the
+    // snapshot's own `active_window_id` (fresh at that instant) so
+    // occupied workspaces don't flash the "empty" colour on startup.
+    property bool windowsReady: false
+
+    // "does a raw workspace hold a window?" — the single source of
+    // truth for both the visibility filter and the `occupied` field.
+    // Window-list derived, NOT ws.active_window_id: that field only
+    // refreshes on a WorkspacesChanged snapshot, which barely fires
+    // once the workspace set is fixed (persistent workspaces in
+    // workspaces.kdl), so it rots to its startup value. The
+    // active_window_id branch is the startup-only bridge described
+    // at `windowsReady`. Called inside the `workspaces` binding, so
+    // its property reads register as dependencies — safe.
+    function occupied(ws) {
+        return root.windowsReady
+            ? root.rawWindows.some(w => w.workspace_id === ws.id)
+            : (ws.active_window_id !== null && ws.active_window_id !== undefined);
+    }
+
     // ── the contract ──────────────────────────────────────────
     readonly property var workspaces: rawWorkspaces
         .slice()                          // never sort in place
         .sort((a, b) => a.output === b.output
                         ? a.idx - b.idx
                         : String(a.output).localeCompare(String(b.output)))
+        // niri keeps one trailing *unnamed* empty workspace per
+        // output as scratch space. A persistent workspace always has
+        // a name (workspaces.kdl); an unnamed one only earns a chip
+        // while it is focused or holds a window. Without this the bar
+        // shows a stray "10" (or "11", once "0" is added) chip.
+        .filter(ws => !!ws.name || ws.is_focused === true || root.occupied(ws))
         .map(ws => ({
-            // `key` is opaque to the bar, so we store what niri's
-            // CLI actually accepts as a workspace reference.
-            key:      ws.name ? ws.name : ws.idx,
+            // niri's socket resolves {"reference":{"Id":…}} against
+            // the global workspace id, not the per-output idx.
+            key:      ws.id,
             label:    ws.name ? ws.name : String(ws.idx),
             focused:  ws.is_focused === true,
-            // TODO(you): active_window_id is null for an empty
-            // workspace, which is *almost* "occupied". It is wrong
-            // for a workspace whose only window is on another
-            // monitor's column. Track WindowsChanged /
-            // WindowOpenedOrChanged / WindowClosed and count
-            // windows per workspace_id if you want this exact.
-            occupied: ws.active_window_id !== null && ws.active_window_id !== undefined,
+            occupied: root.occupied(ws),
             output:   ws.output ?? ""
         }))
 
+    // ── sending actions ───────────────────────────────────────
+    // Won't redial if the connection dies — restart quickshell if
+    // that ever happens. Not worth building reconnect logic for.
+    // `connected` tracks desired state, not an established link, so
+    // a click fired in the first moments after `active` flips true
+    // (before the async connect lands) is dropped with a warning.
+    // Not worth a pending-write queue — nobody clicks that fast.
+    property Socket actionSocket: Socket {
+        path: Quickshell.env("NIRI_SOCKET")
+        connected: root.active
+        onError: err => console.warn("niri: action socket error:", err)
+        parser: SplitParser {
+            onRead: line => {
+                let reply;
+                try {
+                    reply = JSON.parse(line);
+                } catch (e) {
+                    console.warn("niri: unparseable action reply:", line);
+                    return;
+                }
+                if (reply.Err)
+                    console.warn("niri: action failed:", reply.Err);
+            }
+        }
+    }
+
     function focusWorkspace(key) {
-        // TODO(you): this goes through the CLI, which resolves a
-        // bare number as a *per-output* index — ambiguous once you
-        // have two monitors. The correct fix is to write straight
-        // to $NIRI_SOCKET, which takes a workspace id:
-        //
-        //   {"Action":{"FocusWorkspace":{"reference":{"Id":<ws.id>}}}}\n
-        //
-        // Quickshell.Io.Socket can do that. Try it once the rest
-        // works; then `key` becomes ws.id and the mapping above
-        // gets simpler, not harder.
-        Quickshell.execDetached(["niri", "msg", "action", "focus-workspace", String(key)]);
+        if (!actionSocket.connected) {
+            console.warn("niri: action socket not connected, dropping focus request");
+            return;
+        }
+        actionSocket.write(JSON.stringify({
+            Action: { FocusWorkspace: { reference: { Id: key } } }
+        }) + "\n");
+        actionSocket.flush();
     }
 
     // ── the event stream ──────────────────────────────────────
@@ -110,13 +160,43 @@ QtObject {
                 is_focused: focused ? (w.id === id) : w.is_focused
             }));
 
+        } else if (ev.WindowsChanged) {
+            // Full window snapshot, sent once just after the first
+            // WorkspacesChanged.
+            root.rawWindows = ev.WindowsChanged.windows;
+            root.windowsReady = true;
+
+        } else if (ev.WindowOpenedOrChanged) {
+            // Upsert by id. This fires on every title/focus/layout
+            // change too, not just workspace moves. `occupied` (the
+            // only consumer today) keys off workspace_id, so when
+            // that is unchanged, refresh the stored object in place
+            // and stop: mutating an element keeps the array identity,
+            // so the `workspaces` binding does not re-run and the
+            // bar's chip delegates are not rebuilt — but a later
+            // consumer of e.g. is_urgent still sees current data.
+            const win = ev.WindowOpenedOrChanged.window;
+            const prev = root.rawWindows.find(w => w.id === win.id);
+            if (prev && prev.workspace_id === win.workspace_id) {
+                Object.assign(prev, win);
+                return;
+            }
+            // workspace_id changed (or new window): rebuild so the
+            // binding sees it. filter-then-concat, never push —
+            // array identity must change.
+            root.rawWindows = root.rawWindows
+                .filter(w => w.id !== win.id)
+                .concat([win]);
+
+        } else if (ev.WindowClosed) {
+            const id = ev.WindowClosed.id;
+            root.rawWindows = root.rawWindows.filter(w => w.id !== id);
+
         }
-        // TODO(you): three more events are worth handling, in this
+        // TODO(you): two more events are worth handling, in this
         // order of usefulness. Each is a few lines and follows the
         // rebuild-the-array pattern above:
         //
-        //   WorkspaceActiveWindowChanged {workspace_id, active_window_id}
-        //       -> keeps `occupied` honest as you open/close windows
         //   WorkspaceUrgencyChanged      {id, urgent}
         //       -> add `urgent` to the contract in Wm.qml and a
         //          Theme.bar.wsUrgent colour, then use it in
