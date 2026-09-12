@@ -13,15 +13,7 @@ PanelWindow {
     property int capacity: -1
     property string batteryst: "nan"
     property bool hasBattery: false
-
-    readonly property int batFull: 100
-    readonly property int batBreakpoint: 80
-    readonly property real heightBreakpoint: 12.5
-    readonly property int heightLow: 3
-    readonly property int heightFull: 17
-
-    readonly property int batNormalThreshold: 40
-    readonly property int batWarningThreshold: 30
+    property var battery: ({})
 
     anchors {
         top: true
@@ -52,37 +44,6 @@ PanelWindow {
     SystemClock {
       id: clock
       precision: SystemClock.Minutes
-    }
-
-    function fillColor(cap, status) {
-      switch(status) {
-        case "Not charging":
-          return Theme.bar.batNotCharging;
-        case "Charging":
-          return Theme.bar.batCharging;
-      }
-
-      if (cap < batNormalThreshold) {
-        if (cap < batWarningThreshold) 
-         return Theme.bar.batCritical;
-        return Theme.bar.batWarning
-      }
-      return Theme.bar.batNormal;
-    }
-
-    function getBatteryHeight(cap) {
-       let m;
-       let b;
-
-       if (cap <= batBreakpoint) {
-         m = (heightBreakpoint - heightLow) / batBreakpoint;
-         b = heightBreakpoint - m * batBreakpoint;
-         return m * cap + b;
-       }
-
-       m = (heightFull - heightBreakpoint) / (batFull - batBreakpoint);
-       b = heightFull - m * batFull;
-       return m * cap + b;
     }
 
     RowLayout {
@@ -144,31 +105,14 @@ PanelWindow {
             color: Theme.bar.clock
         }
 
-        Item {
-          Layout.preferredWidth: 10
-          Layout.preferredHeight: 18
-          Layout.alignment: Qt.AlignVCenter
-          visible: bar.hasBattery
-
-          Rectangle {
-            height: bar.getBatteryHeight(bar.capacity)
-            width: 8
-            color: bar.fillColor(bar.capacity, bar.batteryst)
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            radius: 3
-            topRightRadius: 1
-            topLeftRadius: 1
-          }
-
-          Rectangle {
-            anchors.fill: parent
-            color: "transparent" 
-            border.width: 1
-            border.color: Theme.bar.batOutline
-            radius: 3
-          }
-
+        BatteryIndicator {
+            Layout.preferredWidth: 10
+            Layout.preferredHeight: 18
+            Layout.alignment: Qt.AlignVCenter
+            capacity: bar.capacity
+            batteryst: bar.batteryst
+            hasBattery: bar.hasBattery
+            battery: bar.battery
         }
     }
 }

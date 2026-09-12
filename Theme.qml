@@ -46,4 +46,11 @@ Singleton {
         readonly property color batNotCharging: theme.purple
         readonly property color batCharging:    theme.blue
     }
+
+    readonly property QtObject tooltip: QtObject {
+        readonly property color bg:            theme.surface
+        readonly property color border:        theme.dim3
+        readonly property color textPrimary:   theme.text
+        readonly property color textSecondary: theme.dim2
+    }
 }

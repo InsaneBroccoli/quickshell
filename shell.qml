@@ -10,6 +10,7 @@ ShellRoot {
     property int capacity: -1
     property string batteryStatus: "nan"
     property bool hasBattery: false
+    property var battery: ({})
 
     // Kernel version
     FileView {
@@ -41,6 +42,44 @@ ShellRoot {
     }
 
     FileView {
+      id: batUevent
+      path: "/sys/class/power_supply/BAT0/uevent"
+
+      onLoaded: {
+        root.battery = root.parseUevent(batUevent.text())
+      }
+    }
+
+    function parseUevent(text) {
+      const fields = {};
+      for (const line of text.split("\n")) {
+        const idx = line.indexOf("=");
+        if (idx === -1) continue;
+        const key = line.slice(0, idx).replace("POWER_SUPPLY_", "");
+        fields[key] = line.slice(idx + 1);
+      }
+
+      // parseInt returns NaN for absent keys, which is not nullish and so
+      // slips past every ?? guard downstream. Batteries reporting the
+      // charge family (CHARGE_NOW/CURRENT_NOW) lack these keys entirely.
+      const num = key => {
+        const n = parseInt(fields[key]);
+        return Number.isFinite(n) ? n : undefined;
+      };
+
+      return {
+        cycleCount: num("CYCLE_COUNT"),
+        powerNow: num("POWER_NOW"),
+        energyNow: num("ENERGY_NOW"),
+        energyFull: num("ENERGY_FULL"),
+        energyFullDesign: num("ENERGY_FULL_DESIGN"),
+        voltageNow: num("VOLTAGE_NOW"),
+        modelName: fields.MODEL_NAME,
+        manufacturer: fields.MANUFACTURER
+      };
+    }
+
+    FileView {
       id: batteryAvailable
       path: Quickshell.env("HOME") + ("/.config/quickshell/host-facts.json")
 
@@ -53,11 +92,12 @@ ShellRoot {
     // Slow timer for system stats
     Timer {
         interval: 2000
-        running: true
+        running: root.hasBattery
         repeat: true
         onTriggered: {
             batFile.reload()
             batStatus.reload()
+            batUevent.reload()
         }
     }
 
@@ -68,6 +108,7 @@ ShellRoot {
           kernelVersion: root.kernelVersion
           batteryst: root.batteryStatus
           hasBattery: root.hasBattery
+          battery: root.battery
         }
     }
 }
