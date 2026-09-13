@@ -71,10 +71,8 @@ PanelWindow {
             Layout.alignment: Qt.AlignVCenter
             Layout.fillHeight: true
 
-            // Under niri each workspace belongs to an output, so
-            // filter to this bar's screen. Hyprland's backend
-            // reports "" for empty slots, which Workspaces lets
-            // through — see the filter in Workspaces.qml.
+            // Each niri workspace belongs to an output, so filter
+            // to this bar's screen — see the filter in Workspaces.qml.
             output: bar.modelData ? bar.modelData.name : ""
         }
 
@@ -83,7 +81,7 @@ PanelWindow {
         }
 
         // ToplevelManager is the wlr-foreign-toplevel protocol, which
-        // both Hyprland and niri implement — no WM branch needed.
+        // niri implements — no compositor-specific code needed.
         // Verify on a new compositor with:
         //   wayland-info | grep foreign_toplevel
         BarText {

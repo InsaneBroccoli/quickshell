@@ -1,10 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
 
-// The workspace indicator. Note what is *not* in this file: any
-// mention of Hyprland or niri. It repeats over whatever Wm gives
-// it, so a fixed 1..10 grid (Hyprland) and a growing dynamic list
-// (niri) are the same widget.
+// The workspace indicator. It knows nothing about the compositor:
+// it repeats over whatever Wm gives it, so any backend that produces
+// the { key, label, focused, occupied, output } shape works.
 RowLayout {
     id: root
 
@@ -17,7 +16,7 @@ RowLayout {
 
     readonly property var items: root.output === ""
         ? Wm.workspaces
-        : Wm.workspaces.filter(ws => ws.output === "" || ws.output === root.output)
+        : Wm.workspaces.filter(ws => ws.output === root.output)
 
     Repeater {
         model: root.items

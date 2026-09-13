@@ -3,31 +3,27 @@ pragma Singleton
 import Quickshell
 import QtQuick
 
+// Thin facade over the compositor backend. Only niri exists now; the
+// indirection stays so widgets keep talking to `Wm.workspaces` and
+// `Wm.focusWorkspace` rather than to a backend directly.
 Singleton {
     id: root
 
-    readonly property string compositor:
-          Quickshell.env("NIRI_SOCKET") ? "niri"
-        : Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") ? "hyprland"
-        : "unknown"
-
-    readonly property HyprlandBackend hyprland: HyprlandBackend {
-        active: root.compositor === "hyprland"
+    // Quickshell.env is a plain function, not a notifying property:
+    // `active` is evaluated once at startup. niri-session exports
+    // NIRI_SOCKET into the user manager, so this is set for the service.
+    readonly property NiriBackend backend: NiriBackend {
+        active: !!Quickshell.env("NIRI_SOCKET")
     }
 
-    readonly property NiriBackend niri: NiriBackend {
-        active: root.compositor === "niri"
-    }
-
-    readonly property var backend:
-          compositor === "hyprland" ? hyprland
-        : compositor === "niri"     ? niri
-        : null
-
-    readonly property var workspaces: backend ? backend.workspaces : []
+    readonly property var workspaces: backend.workspaces
 
     function focusWorkspace(key) {
-        if (backend)
-            backend.focusWorkspace(key);
+        backend.focusWorkspace(key);
+    }
+
+    Component.onCompleted: {
+        if (!backend.active)
+            console.warn("Wm: NIRI_SOCKET is not set; workspace list will stay empty");
     }
 }
